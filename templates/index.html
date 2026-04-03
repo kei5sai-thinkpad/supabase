@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紅葉掲示板 - トップ</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #fff8f5; } /* 紅葉を意識した薄いオレンジ系 */
+        .container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #8b0000; border-bottom: 2px solid #8b0000; padding-bottom: 5px; } /* 濃い赤 */
+        h2 { color: #a0522d; margin-top: 30px; } /* 茶色 */
+        
+        /* 投稿フォームのスタイル */
+        .post-form, .login-form { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; background-color: #fcfcfc; }
+        input[type="text"], input[type="password"], textarea, input[type="file"] { width: 98%; padding: 8px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 3px; box-sizing: border-box; }
+        button { background-color: #dc3545; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #c82333; }
+        
+        /* 投稿/レスのスタイル */
+        .post { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative;}
+        .post-header { font-size: 0.9em; color: #666; margin-bottom: 5px; }
+        .post-header a { color: #8b0000; font-weight: bold; text-decoration: none; } /* スレッドリンクの色 */
+        .post-header a:hover { text-decoration: underline; }
+        .admin-post { background-color: #fff0f5; border-left: 5px solid #ff1493; } /* 管理者投稿をピンク系に */
+        .deleted-post { color: #999; font-style: italic; background-color: #eee; }
+        
+        /* フラッシュメッセージ */
+        .flash-message { padding: 10px; margin-bottom: 15px; border-radius: 5px; font-weight: bold; }
+        .flash-success { background-color: #d4edda; color: #155724; }
+        .flash-error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>紅葉掲示板</h1>
+        
+        <details>
+            <summary style="cursor: pointer; font-weight: bold; color: #a0522d;">
+                {% if is_admin_logged_in %}
+                    👑 管理者としてログイン中 - [ログアウト]
+                {% else %}
+                    管理者ログイン/操作
+                {% endif %}
+            </summary>
+            <div class="login-form" style="margin-top: 10px;">
+                {% if is_admin_logged_in %}
+                    <p><a href="{{ url_for('admin_dashboard') }}">管理者ダッシュボードへ</a></p>
+                    <p><a href="{{ url_for('admin_logout') }}">ログアウトする</a></p>
+                {% else %}
+                    <form action="{{ url_for('admin_login') }}" method="POST">
+                        <label for="admin_password">管理者パスワード:</label>
+                        <input type="password" name="admin_password" id="admin_password" required style="width: 150px; display: inline-block;">
+                        <button type="submit" style="padding: 5px 10px;">ログイン</button>
+                    </form>
+                {% endif %}
+            </div>
+        </details>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h2>新規スレッドを立てる</h2>
+        <div class="post-form">
+            <form action="{{ url_for('index') }}" method="POST" enctype="multipart/form-data">
+                <label for="content">本文 (必須):</label>
+                <textarea name="content" id="content" rows="5" required></textarea>
+                
+                <label for="username">ユーザー名 (任意):</label>
+                <input type="text" name="username" id="username" maxlength="30" placeholder="名無し">
+
+                <label for="password">削除用パスワード (必須):</label>
+                <input type="password" name="password" id="password" required>
+
+                <label for="file">画像ファイル (任意):</label>
+                <input type="file" name="file" id="file" accept="image/*" style="border: none;">
+
+                <button type="submit">投稿する</button>
+            </form>
+        </div>
+
+        <h2>全投稿スレッド ({{ posts | length }}件)</h2>
+
+        {% for post in posts %}
+            <div class="post {% if post.is_admin %}admin-post{% endif %} {% if post.is_deleted %}deleted-post{% endif %}">
+                <div class="post-header">
+                    <a href="{{ url_for('thread', post_id=post.id) }}">
+                        No.{{ post.id }}
+                    </a> 
+                    | 
+                    {% if post.is_admin %}👑{% endif %}
+                    <strong>{{ post.username }}</strong>
+                    <span style="float: right;">{{ post.created_at.strftime('%Y/%m/%d %H:%M') }}</span>
+                </div>
+                
+                <p>{{ post.linked_content | safe }}</p>
+
+                {% if post.image_filename and not post.is_deleted %}
+                    <p>
+                        <a href="{{ url_for('static', filename='uploads/' + post.image_filename) }}" target="_blank">
+                            [画像を表示]
+                        </a>
+                    </p>
+                {% endif %}
+
+                {% if post.is_deleted %}
+                    <p style="color: red; font-weight: bold;">[削除済み]</p>
+                {% endif %}
+
+                {% if post.replies_list | length > 0 %}
+                    <p style="margin-top: 10px; font-size: 0.9em;">
+                        返信: {{ post.replies_list | length }} 件 
+                        [<a href="{{ url_for('thread', post_id=post.id) }}" style="color: #007bff;">全て読む</a>]
+                    </p>
+                {% endif %}
+
+
+                {% if not post.is_deleted %}
+                    <details style="margin-top: 10px;">
+                        <summary style="font-size: 0.9em; cursor: pointer;">投稿を削除</summary>
+                        <form action="{{ url_for('delete_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('本当にこの投稿を削除しますか？');">
+                            <input type="password" name="password" placeholder="削除用パスワード" required style="width: 150px; display: inline-block;">
+                            <button type="submit" style="background-color: #dc3545; padding: 5px 10px;">削除実行</button>
+                        </form>
+                    </details>
+                {% endif %}
+
+            </div>
+        {% endfor %}
+        
+    </div>
+</body>
+</html>
