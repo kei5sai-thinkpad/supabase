@@ -62,17 +62,19 @@ function renderPosts(posts) {
 
 // 初回ファイル作成＆投稿データ取得
 async function loadPosts() {
-  // ファイルが存在しない場合は自動作成
   let posts = [];
   try {
+    // ファイルが存在するか確認
     const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
     if (error && error.status === 400) {
+      // ファイルがない場合は空配列で作成
       await supabaseClient.storage.from(bucket).upload(fileName, '[]', { upsert: true });
     } else if (data) {
       const text = await data.text();
       try { posts = JSON.parse(text); } catch(e){ posts = []; }
     }
   } catch(e) { console.error(e); }
+
   // 再度ダウンロードして表示
   const { data } = await supabaseClient.storage.from(bucket).download(fileName);
   if (data) {
