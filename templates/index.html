@@ -5,44 +5,37 @@
 <title>Storage掲示板</title>
 <style>
 body { font-family: sans-serif; background:#1e1e2f; color:#fff; text-align:center; padding:20px; }
-textarea,input { width:100%; margin:5px 0; padding:8px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:#fff; }
-button { padding:8px 12px; border:none; border-radius:6px; cursor:pointer; background:#ff416c; color:#fff; font-weight:bold; }
-.post { background: rgba(255,255,255,0.1); padding:10px; margin:10px 0; border-radius:8px; position: relative; }
-.post button.delete-btn { position:absolute; top:5px; right:5px; background:red; padding:3px 6px; font-size:0.7em; border-radius:4px; }
+form { max-width:700px; margin:0 auto; }
+textarea,input,button { width:100%; margin:5px 0; padding:10px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:#fff; font-size:1em; box-sizing:border-box; }
+button { background: linear-gradient(135deg, #ff416c, #ff4b2b); font-weight:bold; cursor:pointer; transition:0.2s; }
+button:hover { transform: scale(1.02); }
+.post { background: rgba(255,255,255,0.1); padding:10px; margin:10px 0; border-radius:8px; position: relative; text-align:left; }
+.post button.delete-btn { position:absolute; top:5px; right:5px; background:red; padding:3px 6px; font-size:0.7em; border-radius:4px; cursor:pointer; }
+.post b { display:block; margin-bottom:5px; color:#ffcc70; }
+.post p { margin:0; word-break:break-word; }
 </style>
 </head>
 <body>
 <h1>掲示板（Storage版）</h1>
 <form id="postForm">
-<textarea name="content" placeholder="内容を入力" required></textarea><br>
-<input type="text" name="username" placeholder="名前"><br>
-<input type="password" name="password" placeholder="削除パスワード" required><br>
+<textarea name="content" placeholder="内容を入力" required></textarea>
+<input type="text" name="username" placeholder="名前">
+<input type="password" name="password" placeholder="削除パスワード" required>
 <button type="submit">投稿</button>
 </form>
-<div id="postsContainer"></div>
+<div id="postsContainer" style="max-width:700px; margin:20px auto;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ===== Supabase 設定 =====
-const SUPABASE_URL = 'https://cbeqemihvwwcrzppaitq.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const bucket = 'public'; // 公開バケット名
 const fileName = 'posts.json';
 
 const form = document.getElementById('postForm');
 const postsContainer = document.getElementById('postsContainer');
-
-// 投稿データ取得
-async function loadPosts() {
-  let posts = [];
-  const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
-  if (data) {
-    const text = await data.text();
-    try { posts = JSON.parse(text); } catch(e){ posts = []; }
-  }
-  renderPosts(posts);
-}
 
 // 投稿レンダリング
 function renderPosts(posts) {
@@ -67,6 +60,20 @@ function renderPosts(posts) {
   });
 }
 
+// 投稿データ取得
+async function loadPosts() {
+  let posts = [];
+  const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
+
+  if (error && error.status === 400) {
+    posts = []; // ファイルがない場合は空配列
+  } else if (data) {
+    const text = await data.text();
+    try { posts = JSON.parse(text); } catch(e){ posts = []; }
+  }
+  renderPosts(posts);
+}
+
 // 投稿追加
 form.addEventListener('submit', async e => {
   e.preventDefault();
@@ -83,13 +90,14 @@ form.addEventListener('submit', async e => {
 
   posts.unshift({ id: Date.now(), content, username, password });
   await supabaseClient.storage.from(bucket).upload(fileName, JSON.stringify(posts), { upsert: true });
+
   form.reset();
   loadPosts();
 });
 
 // 投稿削除
 async function deletePost(id) {
-  const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
+  const { data } = await supabaseClient.storage.from(bucket).download(fileName);
   if (!data) return;
   const text = await data.text();
   let posts = [];
