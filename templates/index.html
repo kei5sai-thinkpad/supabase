@@ -28,10 +28,10 @@ button:hover { transform: scale(1.02); }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ===== Supabase 設定 =====
-const SUPABASE_URL = 'https://cbeqemihvwwcrzppaitq.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';
+const SUPABASE_URL = 'https://cbeqemihvwwcrzppaitq.supabase.co'; // 自分のURLに置き換え
+const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY'; // 自分のPublishable Keyに置き換え
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const bucket = 'public'; // 公開バケット名
+const bucket = 'public'; 
 const fileName = 'posts.json';
 
 const form = document.getElementById('postForm');
@@ -60,7 +60,7 @@ function renderPosts(posts) {
   });
 }
 
-// 投稿データ取得
+// 投稿データ取得（ファイルがない場合は空配列）
 async function loadPosts() {
   let posts = [];
   const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
@@ -81,6 +81,7 @@ form.addEventListener('submit', async e => {
   const username = form.username.value || '名無し';
   const password = form.password.value;
 
+  // 既存投稿取得
   const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
   let posts = [];
   if (data) {
