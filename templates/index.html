@@ -4,29 +4,23 @@
 <meta charset="UTF-8">
 <title>掲示板</title>
 <style>
-/* ===== 全体 ===== */
 body {
   margin: 0;
   font-family: "Segoe UI", "Noto Sans JP", sans-serif;
   background: linear-gradient(135deg, #1e1e2f, #2b2b45);
   color: #fff;
 }
-
 .container {
   max-width: 700px;
   margin: 40px auto;
   padding: 20px;
 }
-
-/* ===== 見出し ===== */
 h1 {
   text-align: center;
   font-size: 2.2em;
   margin-bottom: 20px;
   text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
-
-/* ===== フォーム ===== */
 form {
   background: rgba(255,255,255,0.05);
   padding: 15px;
@@ -34,7 +28,6 @@ form {
   backdrop-filter: blur(10px);
   margin-bottom: 20px;
 }
-
 textarea, input {
   width: 100%;
   margin-top: 8px;
@@ -45,9 +38,7 @@ textarea, input {
   background: rgba(255,255,255,0.1);
   color: white;
 }
-
 textarea { height: 80px; resize: none; }
-
 button {
   margin-top: 10px;
   padding: 10px;
@@ -60,11 +51,8 @@ button {
   cursor: pointer;
   transition: 0.2s;
 }
-
 button:hover { transform: scale(1.05); }
 button:focus { outline: none; box-shadow: 0 0 10px #ff4b2b; }
-
-/* ===== 投稿カード ===== */
 .post {
   background: rgba(255,255,255,0.05);
   padding: 15px;
@@ -78,12 +66,10 @@ button:focus { outline: none; box-shadow: 0 0 10px #ff4b2b; }
   animation: fadeInUp 0.5s forwards;
   position: relative;
 }
-
 .post:hover { transform: translateY(-3px); }
 .post b { color: #ffcc70; }
 .post span { font-size: 0.8em; color: #ccc; float: right; }
 .post p { margin-top: 5px; word-break: break-word; }
-
 .post button.delete-btn {
   position: absolute;
   top: 10px;
@@ -94,15 +80,10 @@ button:focus { outline: none; box-shadow: 0 0 10px #ff4b2b; }
   font-size: 0.7em;
   border-radius: 6px;
 }
-
 a { color: #4fc3f7; }
-
-/* ===== アニメーション ===== */
 @keyframes fadeInUp {
   to { opacity: 1; transform: translateY(0); }
 }
-
-/* ===== レスポンシブ ===== */
 @media (max-width: 500px) {
   .container { margin: 20px; padding: 15px; }
   h1 { font-size: 1.8em; }
@@ -110,33 +91,30 @@ a { color: #4fc3f7; }
 </style>
 </head>
 <body>
-
 <div class="container">
 <h1>掲示板</h1>
-
 <form id="postForm">
 <textarea name="content" required placeholder="内容を入力"></textarea><br>
 <input type="text" name="username" placeholder="名前"><br>
 <input type="password" name="password" placeholder="削除パスワード" required><br>
 <button type="submit">投稿</button>
 </form>
-
 <hr>
+<div id="postsContainer"></div>
 
-<div id="postsContainer">
-<!-- 投稿がここに入る -->
-</div>
-
+<!-- Supabase ライブラリ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-const supabaseUrl = 'https://cbeqemihvwwcrzppaitq.supabase.co';   // ←ここにSupabase URL
-const supabaseKey = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo'; // ←ここにAnonキー
+// ===== Supabase 設定 =====
+const supabaseUrl = 'https://cbeqemihvwwcrzppaitq.supabase.co';       // ここにプロジェクトURL
+const supabaseKey = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';   // ここにPublishable Key
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 const form = document.getElementById('postForm');
 const postsContainer = document.getElementById('postsContainer');
 
-// 投稿一覧を取得して表示
+// 投稿一覧表示
 async function loadPosts() {
   const { data, error } = await supabase
     .from('posts')
@@ -151,8 +129,8 @@ async function loadPosts() {
     div.className = 'post';
     div.id = `post-${post.id}`;
     div.innerHTML = `
-      <b>${post.username}</b>
-      <span>${post.created_at}</span>
+      <b>${post.username || '名無し'}</b>
+      <span>${new Date(post.created_at).toLocaleString()}</span>
       <p>${post.linked_content}</p>
       <button class="delete-btn" data-id="${post.id}">削除</button>
     `;
@@ -187,7 +165,7 @@ form.addEventListener('submit', async e => {
     .from('posts')
     .insert([{ linked_content: content, username, password }]);
 
-  if (error) alert('投稿失敗: ' + error.message);
+  if (error) alert('投稿に失敗: ' + error.message);
   else {
     form.reset();
     loadPosts();
@@ -197,7 +175,6 @@ form.addEventListener('submit', async e => {
 // 初回ロード
 loadPosts();
 </script>
-
 </div>
 </body>
 </html>
