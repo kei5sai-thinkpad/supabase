@@ -15,12 +15,7 @@ body {
   margin: 40px auto;
   padding: 20px;
 }
-h1 {
-  text-align: center;
-  font-size: 2.2em;
-  margin-bottom: 20px;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-}
+h1 { text-align: center; font-size: 2.2em; margin-bottom: 20px; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
 form {
   background: rgba(255,255,255,0.05);
   padding: 15px;
@@ -52,7 +47,6 @@ button {
   transition: 0.2s;
 }
 button:hover { transform: scale(1.05); }
-button:focus { outline: none; box-shadow: 0 0 10px #ff4b2b; }
 .post {
   background: rgba(255,255,255,0.05);
   padding: 15px;
@@ -60,11 +54,10 @@ button:focus { outline: none; box-shadow: 0 0 10px #ff4b2b; }
   border-radius: 12px;
   backdrop-filter: blur(8px);
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  transition: 0.3s;
+  position: relative;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.5s forwards;
-  position: relative;
 }
 .post:hover { transform: translateY(-3px); }
 .post b { color: #ffcc70; }
@@ -80,14 +73,7 @@ button:focus { outline: none; box-shadow: 0 0 10px #ff4b2b; }
   font-size: 0.7em;
   border-radius: 6px;
 }
-a { color: #4fc3f7; }
-@keyframes fadeInUp {
-  to { opacity: 1; transform: translateY(0); }
-}
-@media (max-width: 500px) {
-  .container { margin: 20px; padding: 15px; }
-  h1 { font-size: 1.8em; }
-}
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -102,19 +88,16 @@ a { color: #4fc3f7; }
 <hr>
 <div id="postsContainer"></div>
 
-<!-- Supabase ライブラリは1回だけ読み込む -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-// ===== Supabase 設定 =====
-const supabaseUrl = 'https://cbeqemihvwwcrzppaitq.supabase.co';       // ここに自分のプロジェクトURL
-const supabaseKey = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';   // ここにPublishable Key
+// ===== ここに既存プロジェクトの情報を入れる =====
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseKey = 'YOUR_PUBLISHABLE_KEY';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 const form = document.getElementById('postForm');
 const postsContainer = document.getElementById('postsContainer');
 
-// 投稿一覧表示
 async function loadPosts() {
   const { data, error } = await supabaseClient
     .from('posts')
@@ -136,7 +119,6 @@ async function loadPosts() {
     `;
     postsContainer.appendChild(div);
 
-    // 削除ボタン
     div.querySelector('.delete-btn').addEventListener('click', async () => {
       const password = prompt('削除パスワードを入力してください');
       if (!password) return;
@@ -153,7 +135,6 @@ async function loadPosts() {
   });
 }
 
-// 投稿フォーム送信
 form.addEventListener('submit', async e => {
   e.preventDefault();
   const formData = new FormData(form);
@@ -172,7 +153,6 @@ form.addEventListener('submit', async e => {
   }
 });
 
-// 初回ロード
 loadPosts();
 </script>
 </div>
