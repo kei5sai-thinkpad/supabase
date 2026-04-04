@@ -85,6 +85,7 @@ button:focus {
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.5s forwards;
+  position: relative;
 }
 
 .post:hover {
@@ -104,6 +105,17 @@ button:focus {
 .post p {
   margin-top: 5px;
   word-break: break-word;
+}
+
+.post button.delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,0,0,0.6);
+  width: auto;
+  padding: 5px 10px;
+  font-size: 0.7em;
+  border-radius: 6px;
 }
 
 a {
@@ -136,7 +148,7 @@ a {
 <div class="container">
 <h1>掲示板</h1>
 
-<form method="POST">
+<form id="postForm">
 <textarea name="content" required placeholder="内容を入力"></textarea><br>
 <input type="text" name="username" placeholder="名前"><br>
 <input type="password" name="password" placeholder="削除パスワード" required><br>
@@ -145,15 +157,87 @@ a {
 
 <hr>
 
-{% for post in posts %}
-<div class="post">
-<b>{{ post.username }}</b>
-<span>{{ post.created_at }}</span>
-<p>{{ post.linked_content | safe }}</p>
-</div>
-{% endfor %}
-
+<div id="postsContainer">
+<!-- 投稿がここに入る -->
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+const form = document.getElementById('postForm');
+const postsContainer = document.getElementById('postsContainer');
+
+// 投稿取得
+async function loadPosts() {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) return console.error(error);
+
+  postsContainer.innerHTML = '';
+  data.forEach(post => {
+    const div = document.createElement('div');
+    div.className = 'post';
+    div.id = `post-${post.id}`;
+    div.innerHTML = `
+      <b>${post.username}</b>
+      <span>${post.created_at}</span>
+      <p>${post.linked_content}</p>
+      <button class="delete-btn" data-id="${post.id}">削除</button>
+    `;
+    postsContainer.appendChild(div);
+
+    // 削除ボタン
+    div.querySelector('.delete-btn').addEventListener('click', async () => {
+      const password = prompt('削除パスワードを入力してください');
+      if (!password) return;
+      const { data: delData, error: delError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', post.id)
+        .eq('password', password);
+
+      if (delError) {
+        alert('削除に失敗しました: ' + delError.message);
+      } else if (delData.length === 0) {
+        alert('パスワードが違います');
+      } else {
+        alert('削除しました');
+        div.remove();
+      }
+    });
+  });
+}
+
+// 投稿フォーム送信
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const formData = new FormData(form);
+  const content = formData.get('content');
+  const username = formData.get('username') || '名無し';
+  const password = formData.get('password');
+
+  const { data, error } = await supabase
+    .from('posts')
+    .insert([{ linked_content: content, username, password }]);
+
+  if (error) {
+    alert('投稿に失敗しました: ' + error.message);
+  } else {
+    form.reset();
+    loadPosts();
+  }
+});
+
+// 初回ロード
+loadPosts();
+</script>
+
+</div>
 </body>
 </html>
