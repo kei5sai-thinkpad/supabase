@@ -4,13 +4,9 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
-from werkzeug.utils import secure_filename
 
+# --- Flask ---
 app = Flask(__name__)
-
-# --- 初期化 ---
-with app.app_context():
-    db.create_all()
 
 # --- DB設定 ---
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -25,6 +21,7 @@ else:
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "secret"
 
+# 🔥 ここが最重要（順番）
 db = SQLAlchemy(app)
 
 # --- モデル ---
@@ -35,11 +32,11 @@ class Post(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
-# --- 初期化 ---
+# 🔥 ここも最重要（モデルの後）
 with app.app_context():
     db.create_all()
 
-# --- URLリンク変換 ---
+# --- URLリンク化 ---
 def auto_link(text):
     return re.sub(r"(https?://[^\s]+)", r'<a href="\1" target="_blank">\1</a>', text)
 
