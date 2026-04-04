@@ -21,18 +21,18 @@ else:
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "secret"
 
-# 🔥 ここが最重要（順番）
+# --- DB ---
 db = SQLAlchemy(app)
 
-# --- モデル ---
+# --- モデル（ここ修正済み🔥）---
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(30), default="名無し")
     content = db.Column(db.Text, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(512), nullable=False)  # ←ここ重要！！
     created_at = db.Column(db.DateTime, default=datetime.now)
 
-# 🔥 ここも最重要（モデルの後）
+# --- 初期化 ---
 with app.app_context():
     db.create_all()
 
