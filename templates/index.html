@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>掲示板</title>
 <style>
-<style>
+/* ===== 全体 ===== */
 body {
   margin: 0;
   font-family: "Segoe UI", "Noto Sans JP", sans-serif;
@@ -18,12 +18,15 @@ body {
   padding: 20px;
 }
 
+/* ===== 見出し ===== */
 h1 {
   text-align: center;
   font-size: 2.2em;
   margin-bottom: 20px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
+/* ===== フォーム ===== */
 form {
   background: rgba(255,255,255,0.05);
   padding: 15px;
@@ -39,6 +42,8 @@ textarea, input {
   border: none;
   border-radius: 8px;
   outline: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
 }
 
 textarea {
@@ -63,13 +68,23 @@ button:hover {
   transform: scale(1.05);
 }
 
+button:focus {
+  outline: none;
+  box-shadow: 0 0 10px #ff4b2b;
+}
+
+/* ===== 投稿カード ===== */
 .post {
   background: rgba(255,255,255,0.05);
   padding: 15px;
   margin-bottom: 15px;
   border-radius: 12px;
   backdrop-filter: blur(8px);
-  transition: 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  transition: 0.3s;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.5s forwards;
 }
 
 .post:hover {
@@ -82,14 +97,38 @@ button:hover {
 
 .post span {
   font-size: 0.8em;
-  color: #aaa;
+  color: #ccc;
   float: right;
+}
+
+.post p {
+  margin-top: 5px;
+  word-break: break-word;
 }
 
 a {
   color: #4fc3f7;
 }
-</style>
+
+/* ===== アニメーション ===== */
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== レスポンシブ ===== */
+@media (max-width: 500px) {
+  .container {
+    margin: 20px;
+    padding: 15px;
+  }
+
+  h1 {
+    font-size: 1.8em;
+  }
+}
 </style>
 </head>
 <body>
@@ -98,7 +137,7 @@ a {
 <h1>掲示板</h1>
 
 <form method="POST">
-<textarea name="content" required></textarea><br>
+<textarea name="content" required placeholder="内容を入力"></textarea><br>
 <input type="text" name="username" placeholder="名前"><br>
 <input type="password" name="password" placeholder="削除パスワード" required><br>
 <button type="submit">投稿</button>
