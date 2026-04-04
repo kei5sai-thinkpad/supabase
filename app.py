@@ -8,6 +8,10 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
+# --- 初期化 ---
+with app.app_context():
+    db.create_all()
+
 # --- DB設定 ---
 DATABASE_URL = os.getenv("DATABASE_URL")
 
