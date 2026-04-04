@@ -2,159 +2,104 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>掲示板</title>
+<title>Storage掲示板</title>
 <style>
-body {
-  margin: 0;
-  font-family: "Segoe UI", "Noto Sans JP", sans-serif;
-  background: linear-gradient(135deg, #1e1e2f, #2b2b45);
-  color: #fff;
-}
-.container {
-  max-width: 700px;
-  margin: 40px auto;
-  padding: 20px;
-}
-h1 { text-align: center; font-size: 2.2em; margin-bottom: 20px; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-form {
-  background: rgba(255,255,255,0.05);
-  padding: 15px;
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  margin-bottom: 20px;
-}
-textarea, input {
-  width: 100%;
-  margin-top: 8px;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  outline: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
-}
-textarea { height: 80px; resize: none; }
-button {
-  margin-top: 10px;
-  padding: 10px;
-  width: 100%;
-  background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-button:hover { transform: scale(1.05); }
-.post {
-  background: rgba(255,255,255,0.05);
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 12px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  position: relative;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUp 0.5s forwards;
-}
-.post:hover { transform: translateY(-3px); }
-.post b { color: #ffcc70; }
-.post span { font-size: 0.8em; color: #ccc; float: right; }
-.post p { margin-top: 5px; word-break: break-word; }
-.post button.delete-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(255,0,0,0.6);
-  width: auto;
-  padding: 5px 10px;
-  font-size: 0.7em;
-  border-radius: 6px;
-}
-@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+body { font-family: sans-serif; background:#1e1e2f; color:#fff; text-align:center; padding:20px; }
+textarea,input { width:100%; margin:5px 0; padding:8px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:#fff; }
+button { padding:8px 12px; border:none; border-radius:6px; cursor:pointer; background:#ff416c; color:#fff; font-weight:bold; }
+.post { background: rgba(255,255,255,0.1); padding:10px; margin:10px 0; border-radius:8px; position: relative; }
+.post button.delete-btn { position:absolute; top:5px; right:5px; background:red; padding:3px 6px; font-size:0.7em; border-radius:4px; }
 </style>
 </head>
 <body>
-<div class="container">
-<h1>掲示板</h1>
+<h1>掲示板（Storage版）</h1>
 <form id="postForm">
-<textarea name="content" required placeholder="内容を入力"></textarea><br>
+<textarea name="content" placeholder="内容を入力" required></textarea><br>
 <input type="text" name="username" placeholder="名前"><br>
 <input type="password" name="password" placeholder="削除パスワード" required><br>
 <button type="submit">投稿</button>
 </form>
-<hr>
 <div id="postsContainer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ===== ここに既存プロジェクトの情報を入れる =====
-const supabaseUrl = 'https://cbeqemihvwwcrzppaitq.supabase.co';
-const supabaseKey = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+// ===== Supabase 設定 =====
+const SUPABASE_URL = 'https://cbeqemihvwwcrzppaitq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const bucket = 'public'; // 公開バケット名
+const fileName = 'posts.json';
 
 const form = document.getElementById('postForm');
 const postsContainer = document.getElementById('postsContainer');
 
+// 投稿データ取得
 async function loadPosts() {
-  const { data, error } = await supabaseClient
-    .from('posts')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let posts = [];
+  const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
+  if (data) {
+    const text = await data.text();
+    try { posts = JSON.parse(text); } catch(e){ posts = []; }
+  }
+  renderPosts(posts);
+}
 
-  if (error) return console.error(error);
-
+// 投稿レンダリング
+function renderPosts(posts) {
   postsContainer.innerHTML = '';
-  data.forEach(post => {
+  posts.forEach(p => {
     const div = document.createElement('div');
     div.className = 'post';
-    div.id = `post-${post.id}`;
+    div.id = `post-${p.id}`;
     div.innerHTML = `
-      <b>${post.username || '名無し'}</b>
-      <span>${new Date(post.created_at).toLocaleString()}</span>
-      <p>${post.linked_content}</p>
-      <button class="delete-btn" data-id="${post.id}">削除</button>
+      <b>${p.username || '名無し'}</b>
+      <p>${p.content}</p>
+      <button class="delete-btn" data-id="${p.id}">削除</button>
     `;
     postsContainer.appendChild(div);
 
     div.querySelector('.delete-btn').addEventListener('click', async () => {
-      const password = prompt('削除パスワードを入力してください');
-      if (!password) return;
-      const { data: delData, error: delError } = await supabaseClient
-        .from('posts')
-        .delete()
-        .eq('id', post.id)
-        .eq('password', password);
-
-      if (delError) alert('削除に失敗: ' + delError.message);
-      else if (delData.length === 0) alert('パスワードが違います');
-      else div.remove();
+      const pwd = prompt('削除パスワードを入力してください');
+      if (!pwd) return;
+      if (pwd !== p.password) { alert('パスワード違います'); return; }
+      await deletePost(p.id);
     });
   });
 }
 
+// 投稿追加
 form.addEventListener('submit', async e => {
   e.preventDefault();
-  const formData = new FormData(form);
-  const content = formData.get('content');
-  const username = formData.get('username') || '名無し';
-  const password = formData.get('password');
+  const content = form.content.value;
+  const username = form.username.value || '名無し';
+  const password = form.password.value;
 
-  const { data, error } = await supabaseClient
-    .from('posts')
-    .insert([{ linked_content: content, username, password }]);
-
-  if (error) alert('投稿に失敗: ' + error.message);
-  else {
-    form.reset();
-    loadPosts();
+  const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
+  let posts = [];
+  if (data) {
+    const text = await data.text();
+    try { posts = JSON.parse(text); } catch(e){ posts = []; }
   }
+
+  posts.unshift({ id: Date.now(), content, username, password });
+  await supabaseClient.storage.from(bucket).upload(fileName, JSON.stringify(posts), { upsert: true });
+  form.reset();
+  loadPosts();
 });
+
+// 投稿削除
+async function deletePost(id) {
+  const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
+  if (!data) return;
+  const text = await data.text();
+  let posts = [];
+  try { posts = JSON.parse(text); } catch(e){ posts = []; }
+  posts = posts.filter(p => p.id !== id);
+  await supabaseClient.storage.from(bucket).upload(fileName, JSON.stringify(posts), { upsert: true });
+  loadPosts();
+}
 
 loadPosts();
 </script>
-</div>
 </body>
 </html>
