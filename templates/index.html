@@ -46,10 +46,7 @@ textarea, input {
   color: white;
 }
 
-textarea {
-  height: 80px;
-  resize: none;
-}
+textarea { height: 80px; resize: none; }
 
 button {
   margin-top: 10px;
@@ -64,14 +61,8 @@ button {
   transition: 0.2s;
 }
 
-button:hover {
-  transform: scale(1.05);
-}
-
-button:focus {
-  outline: none;
-  box-shadow: 0 0 10px #ff4b2b;
-}
+button:hover { transform: scale(1.05); }
+button:focus { outline: none; box-shadow: 0 0 10px #ff4b2b; }
 
 /* ===== 投稿カード ===== */
 .post {
@@ -88,24 +79,10 @@ button:focus {
   position: relative;
 }
 
-.post:hover {
-  transform: translateY(-3px);
-}
-
-.post b {
-  color: #ffcc70;
-}
-
-.post span {
-  font-size: 0.8em;
-  color: #ccc;
-  float: right;
-}
-
-.post p {
-  margin-top: 5px;
-  word-break: break-word;
-}
+.post:hover { transform: translateY(-3px); }
+.post b { color: #ffcc70; }
+.post span { font-size: 0.8em; color: #ccc; float: right; }
+.post p { margin-top: 5px; word-break: break-word; }
 
 .post button.delete-btn {
   position: absolute;
@@ -118,28 +95,17 @@ button:focus {
   border-radius: 6px;
 }
 
-a {
-  color: #4fc3f7;
-}
+a { color: #4fc3f7; }
 
 /* ===== アニメーション ===== */
 @keyframes fadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== レスポンシブ ===== */
 @media (max-width: 500px) {
-  .container {
-    margin: 20px;
-    padding: 15px;
-  }
-
-  h1 {
-    font-size: 1.8em;
-  }
+  .container { margin: 20px; padding: 15px; }
+  h1 { font-size: 1.8em; }
 }
 </style>
 </head>
@@ -163,14 +129,14 @@ a {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const supabaseUrl = 'YOUR_SUPABASE_URL';
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseUrl = 'YOUR_SUPABASE_URL';   // ←ここにSupabase URL
+const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // ←ここにAnonキー
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 const form = document.getElementById('postForm');
 const postsContainer = document.getElementById('postsContainer');
 
-// 投稿取得
+// 投稿一覧を取得して表示
 async function loadPosts() {
   const { data, error } = await supabase
     .from('posts')
@@ -202,14 +168,9 @@ async function loadPosts() {
         .eq('id', post.id)
         .eq('password', password);
 
-      if (delError) {
-        alert('削除に失敗しました: ' + delError.message);
-      } else if (delData.length === 0) {
-        alert('パスワードが違います');
-      } else {
-        alert('削除しました');
-        div.remove();
-      }
+      if (delError) alert('削除に失敗: ' + delError.message);
+      else if (delData.length === 0) alert('パスワードが違います');
+      else div.remove();
     });
   });
 }
@@ -226,9 +187,8 @@ form.addEventListener('submit', async e => {
     .from('posts')
     .insert([{ linked_content: content, username, password }]);
 
-  if (error) {
-    alert('投稿に失敗しました: ' + error.message);
-  } else {
+  if (error) alert('投稿失敗: ' + error.message);
+  else {
     form.reset();
     loadPosts();
   }
