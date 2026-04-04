@@ -4,10 +4,92 @@
 <meta charset="UTF-8">
 <title>掲示板</title>
 <style>
-body { font-family: sans-serif; background: #f5f5f5; }
-.container { max-width: 700px; margin: auto; background: white; padding: 20px; }
-.post { border-bottom: 1px solid #ccc; padding: 10px; }
-textarea { width: 100%; height: 80px; }
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Noto Sans JP", sans-serif;
+  background: linear-gradient(135deg, #1e1e2f, #2b2b45);
+  color: #fff;
+}
+
+.container {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.2em;
+  margin-bottom: 20px;
+}
+
+form {
+  background: rgba(255,255,255,0.05);
+  padding: 15px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
+}
+
+textarea, input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+textarea {
+  height: 80px;
+  resize: none;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+.post {
+  background: rgba(255,255,255,0.05);
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  transition: 0.2s;
+}
+
+.post:hover {
+  transform: translateY(-3px);
+}
+
+.post b {
+  color: #ffcc70;
+}
+
+.post span {
+  font-size: 0.8em;
+  color: #aaa;
+  float: right;
+}
+
+a {
+  color: #4fc3f7;
+}
+</style>
 </style>
 </head>
 <body>
