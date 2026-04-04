@@ -102,21 +102,21 @@ a { color: #4fc3f7; }
 <hr>
 <div id="postsContainer"></div>
 
-<!-- Supabase ライブラリ -->
+<!-- Supabase ライブラリは1回だけ読み込む -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 // ===== Supabase 設定 =====
-const supabaseUrl = 'https://cbeqemihvwwcrzppaitq.supabase.co';       // ここにプロジェクトURL
+const supabaseUrl = 'https://cbeqemihvwwcrzppaitq.supabase.co';       // ここに自分のプロジェクトURL
 const supabaseKey = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';   // ここにPublishable Key
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 const form = document.getElementById('postForm');
 const postsContainer = document.getElementById('postsContainer');
 
 // 投稿一覧表示
 async function loadPosts() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('posts')
     .select('*')
     .order('created_at', { ascending: false });
@@ -140,7 +140,7 @@ async function loadPosts() {
     div.querySelector('.delete-btn').addEventListener('click', async () => {
       const password = prompt('削除パスワードを入力してください');
       if (!password) return;
-      const { data: delData, error: delError } = await supabase
+      const { data: delData, error: delError } = await supabaseClient
         .from('posts')
         .delete()
         .eq('id', post.id)
@@ -161,7 +161,7 @@ form.addEventListener('submit', async e => {
   const username = formData.get('username') || '名無し';
   const password = formData.get('password');
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('posts')
     .insert([{ linked_content: content, username, password }]);
 
