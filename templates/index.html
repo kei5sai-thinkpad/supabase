@@ -2,21 +2,49 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Render掲示板</title>
+<title>掲示板（完全版）</title>
 <style>
 body { font-family: sans-serif; background:#1e1e2f; color:#fff; text-align:center; padding:20px; }
 form { max-width:700px; margin:0 auto; }
-textarea,input,button { width:100%; margin:5px 0; padding:10px; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:#fff; font-size:1em; box-sizing:border-box; }
-button { background: linear-gradient(135deg, #ff416c, #ff4b2b); font-weight:bold; cursor:pointer; transition:0.2s; }
-button:hover { transform: scale(1.02); }
-.post { background: rgba(255,255,255,0.1); padding:10px; margin:10px 0; border-radius:8px; position: relative; text-align:left; }
-.post button.delete-btn { position:absolute; top:5px; right:5px; background:red; padding:3px 6px; font-size:0.7em; border-radius:4px; cursor:pointer; }
-.post b { display:block; margin-bottom:5px; color:#ffcc70; }
-.post p { margin:0; word-break:break-word; }
+textarea,input,button {
+  width:100%;
+  margin:5px 0;
+  padding:10px;
+  border-radius:6px;
+  border:none;
+  background:rgba(255,255,255,0.1);
+  color:#fff;
+  font-size:1em;
+  box-sizing:border-box;
+}
+button {
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  font-weight:bold;
+  cursor:pointer;
+}
+.post {
+  background: rgba(255,255,255,0.1);
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
+  position: relative;
+  text-align:left;
+}
+.delete-btn {
+  position:absolute;
+  top:5px;
+  right:5px;
+  background:red;
+  padding:3px 6px;
+  font-size:0.7em;
+  border-radius:4px;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
-<h1>Render 掲示板</h1>
+
+<h1>掲示板</h1>
 
 <form id="postForm">
 <textarea name="content" placeholder="内容を入力" required></textarea>
@@ -29,97 +57,125 @@ button:hover { transform: scale(1.02); }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ===== Supabase 設定 =====
-const SUPABASE_URL = 'https://cbeqemihvwwcrzppaitq.supabase.co'; // 自分のURLに置き換え
-const SUPABASE_KEY = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo'; // 自分のPublishable Keyに置き換え
+// ===== Supabase =====
+const SUPABASE_URL = 'https://cbeqemihvwwcrzppaitq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_1BjddSqr8rwahta6ZBJ9tw_CIOyuNUo';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const bucket = 'public'; 
-const fileName = 'posts.json';
+// 🔥 ここが今回の超重要ポイント
+const bucket = 'public';
+const fileName = 'posts/posts.json'; // ← 修正済み！
 
 const form = document.getElementById('postForm');
 const postsContainer = document.getElementById('postsContainer');
 
-// ===== 投稿レンダリング =====
+// ===== 表示 =====
 function renderPosts(posts) {
   postsContainer.innerHTML = '';
   posts.forEach(p => {
     const div = document.createElement('div');
     div.className = 'post';
-    div.id = `post-${p.id}`;
     div.innerHTML = `
       <b>${p.username || '名無し'}</b>
       <p>${p.content}</p>
-      <button class="delete-btn" data-id="${p.id}">削除</button>
+      <button class="delete-btn">削除</button>
     `;
     postsContainer.appendChild(div);
 
-    div.querySelector('.delete-btn').addEventListener('click', async () => {
-      const pwd = prompt('削除パスワードを入力してください');
-      if (!pwd) return;
-      if (pwd !== p.password) { alert('パスワード違います'); return; }
+    div.querySelector('.delete-btn').onclick = async () => {
+      const pwd = prompt('削除パスワード');
+      if (pwd !== p.password) return alert('違う');
+
       await deletePost(p.id);
-    });
+    };
   });
 }
 
-// ===== 初回ファイル作成＆取得 =====
+// ===== 初回作成＋読み込み =====
 async function loadPosts() {
   let posts = [];
-  try {
-    const { data, error } = await supabaseClient.storage.from(bucket).download(fileName);
-    if (error && error.status === 400) {
-      // 初回作成
-      await supabaseClient.storage.from(bucket).upload(fileName, '[]', { upsert: true });
-    } else if (data) {
-      const text = await data.text();
-      try { posts = JSON.parse(text); } catch(e){ posts = []; }
-    }
-  } catch(e){ console.error(e); }
 
-  // 再取得して表示
-  const { data } = await supabaseClient.storage.from(bucket).download(fileName);
-  if (data) {
-    const text = await data.text();
-    try { posts = JSON.parse(text); } catch(e){ posts = []; }
+  try {
+    const { data, error } = await supabaseClient
+      .storage.from(bucket)
+      .download(fileName);
+
+    if (error) {
+      // 🔥 ファイルが無い → 自動作成
+      await supabaseClient
+        .storage.from(bucket)
+        .upload(fileName, '[]', { upsert: true });
+
+      posts = [];
+    } else {
+      const text = await data.text();
+      posts = JSON.parse(text);
+    }
+
+  } catch(e) {
+    console.error(e);
   }
+
   renderPosts(posts);
 }
 
-// ===== 投稿追加 =====
+// ===== 投稿 =====
 form.addEventListener('submit', async e => {
   e.preventDefault();
+
   const content = form.content.value;
   const username = form.username.value || '名無し';
   const password = form.password.value;
 
   let posts = [];
-  const { data } = await supabaseClient.storage.from(bucket).download(fileName);
+
+  const { data } = await supabaseClient
+    .storage.from(bucket)
+    .download(fileName);
+
   if (data) {
     const text = await data.text();
-    try { posts = JSON.parse(text); } catch(e){ posts = []; }
+    posts = JSON.parse(text);
   }
 
-  posts.unshift({ id: Date.now(), content, username, password });
-  await supabaseClient.storage.from(bucket).upload(fileName, JSON.stringify(posts), { upsert: true });
+  posts.unshift({
+    id: Date.now(),
+    content,
+    username,
+    password
+  });
+
+  await supabaseClient
+    .storage.from(bucket)
+    .upload(fileName, JSON.stringify(posts), { upsert: true });
 
   form.reset();
   loadPosts();
 });
 
-// ===== 投稿削除 =====
+// ===== 削除 =====
 async function deletePost(id) {
-  const { data } = await supabaseClient.storage.from(bucket).download(fileName);
+  const { data } = await supabaseClient
+    .storage.from(bucket)
+    .download(fileName);
+
   if (!data) return;
+
   const text = await data.text();
-  let posts = [];
-  try { posts = JSON.parse(text); } catch(e){ posts = []; }
+  let posts = JSON.parse(text);
+
   posts = posts.filter(p => p.id !== id);
-  await supabaseClient.storage.from(bucket).upload(fileName, JSON.stringify(posts), { upsert: true });
+
+  await supabaseClient
+    .storage.from(bucket)
+    .upload(fileName, JSON.stringify(posts), { upsert: true });
+
   loadPosts();
 }
 
+// ===== 起動 =====
 loadPosts();
 </script>
+
 </body>
 </html>
